@@ -23,6 +23,7 @@ public class LexAnal {
 	//int lastCharP;
 	String lexeme;
 	boolean isRealConst = false;
+	boolean numberError = false;
 	StringBuffer sb = new StringBuffer(20);
 	int token;
 	int begLine,  begColumn, endLine, endColumn, tempLine, tempColumn;
@@ -74,7 +75,7 @@ public class LexAnal {
 			{
 				endLine++; begLine++; begColumn = 1; endColumn = 1;
 			}
-			else if (c == TILDA || c == BSQ || c == BSL || c == STREHA || c == USC || c == AFNA || c == VPRASAJ || c == DOLLAR ||
+			else if (c == TILDA || c == BSQ || c == BSL || c == STREHA || c == AFNA || c == VPRASAJ || c == DOLLAR ||
 					 c == SQ)
 			{
 				tempColumn = begColumn;
@@ -99,13 +100,19 @@ public class LexAnal {
 
 			else if (isDigit(c))
 			{
-				String tmp;
+				String tmp = readRemainingDigits();
 				StringBuffer sb = new StringBuffer(20);
 				sb.append((char) c);
-				if ((tmp = readRemainingDigits()).endsWith(" ") && !isRealConst)
+				if (numberError)
+				{
+					System.out.println("napaka");
+					numberError = false;
+					continue;
+				}
+				
+				else if ( !isRealConst)
 				{
 					sb.append(tmp);
-					sb.setLength(sb.length()-1);
 					System.out.println(sb.toString());
 					tempColumn = begColumn;
 					begColumn = endColumn;
@@ -268,19 +275,25 @@ public class LexAnal {
 				sb.append((char) c);
 				String remaining = readRealNum();
 				if (remaining.length() == 0)
-					return "";
+				{
+					numberError = true;
+					break;
+				}
 				else
 				{
 					isRealConst = true;
-					return sb.append(remaining+" ").toString();
+					return sb.append(remaining).toString();
 				}
 			}
-			else if (isWhiteSpace(c))  //ce je prebrana stevilka samo ena cifra
+			else if (isWhiteSpace(c) || c == SEMIC || c == COMMA)  //ce je prebrana stevilka samo ena cifra
 			{
-				return sb.append(" ").toString();
+				numberError = false;
+				raf.seek(raf.getFilePointer()-1);
+				return sb.toString();
 			}
 			else
 			{
+				numberError = true;
 				raf.seek(raf.getFilePointer()-1);
 				begColumn--;
 				break;
@@ -308,10 +321,21 @@ public class LexAnal {
 		{
 			return "";
 		}
-		else if ((! isWhiteSpace(c)) && (c !=SEMIC))
+		else if (c == SEMIC)
 		{
-			System.out.println("error");
-			return "";
+			raf.seek(raf.getFilePointer()-1);
+			endColumn--;
+			return sb.toString();
+		}
+		else if (c == COMMA)
+		{
+			raf.seek(raf.getFilePointer()-1);
+			endColumn--;
+			return sb.toString();
+		}
+		else if (isWhiteSpace(c))
+		{
+			return sb.toString();
 		}
 		else if( c == DOT)
 		{
@@ -320,7 +344,7 @@ public class LexAnal {
 		}
 		else
 		{
-			return sb.toString();
+			return "";
 		}
 		
 	}
