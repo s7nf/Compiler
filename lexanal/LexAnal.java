@@ -278,15 +278,8 @@ public class LexAnal {
 					return sb.append(remaining).toString();
 				}
 			}
-			else if (isWhiteSpace(c) || c == SEMIC || c == COMMA)  //ce je prebrana stevilka samo ena cifra
-			{
-				numberError = false;
-				raf.seek(raf.getFilePointer()-1);
-				return sb.toString();
-			}
 			else
 			{
-				numberError = true;
 				ungetChar();
 				break;
 			}
@@ -309,18 +302,16 @@ public class LexAnal {
 				break;
 		}
 		
-		if (c == 101 || c == 69) //e or E //not implemented
+		if (c == 101 || c == 69) //e or E 
 		{
-			return "";
-		}
-		else if (c == SEMIC || c == COMMA)
-		{
-			ungetChar();
-			return sb.toString();
-		}
-		else if (isWhiteSpace(c))
-		{
-			return sb.toString();
+			String remaining;
+			if ((remaining = handleExponent()) != "")
+			{
+				sb.append((char)c);
+				return sb.append(remaining).toString();
+			}
+			else
+				return "";
 		}
 		else if( c == DOT) //npr.: 3. 
 		{
@@ -329,9 +320,34 @@ public class LexAnal {
 		else
 		{
 			ungetChar();
+			return sb.toString();
+		}
+	}
+	private String handleExponent() throws IOException
+	{
+		StringBuffer sb = new StringBuffer();
+		int c = getNextChar();
+		if (c == 43 || c == 45 || isDigit(c)) //+ -
+		{
+			sb.append((char)c);
+		}
+		else
+		{
+			ungetChar();
 			return "";
 		}
-		
+		while(true)
+		{
+			c = getNextChar();
+			if (isDigit(c))
+				sb.append((char)c);
+			else
+			{
+				ungetChar();
+				break;
+			}
+		}
+		return sb.toString();
 	}
 	private String readRemainingLetters() throws IOException
 	{
