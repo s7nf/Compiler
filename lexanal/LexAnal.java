@@ -22,6 +22,7 @@ public class LexAnal {
 	RandomAccessFile raf;
 	//int lastCharP;
 	String lexeme;
+	boolean isRealConst = false;
 	StringBuffer sb = new StringBuffer(20);
 	int token;
 	int begLine,  begColumn, endLine, endColumn, tempLine, tempColumn;
@@ -101,7 +102,7 @@ public class LexAnal {
 				String tmp;
 				StringBuffer sb = new StringBuffer(20);
 				sb.append((char) c);
-				if ((tmp = readRemainingDigits()).endsWith(" "))
+				if ((tmp = readRemainingDigits()).endsWith(" ") && !isRealConst)
 				{
 					sb.append(tmp);
 					sb.setLength(sb.length()-1);
@@ -109,6 +110,16 @@ public class LexAnal {
 					tempColumn = begColumn;
 					begColumn = endColumn;
 					s = new Symbol(1, sb.toString(), new Position("test.txt", begLine, tempColumn, endLine, endColumn));
+					sb.setLength(0);
+					return s;
+				}
+				else if (isRealConst)
+				{
+					isRealConst = false;
+					sb.append(tmp);
+					tempColumn = begColumn;
+					begColumn = endColumn;
+					s = new Symbol(2, sb.toString(), new Position("test.txt", begLine, tempColumn, endLine, endColumn));
 					sb.setLength(0);
 					return s;
 				}
@@ -233,7 +244,7 @@ public class LexAnal {
 	
 	private boolean isLetter(int c)
 	{
-		return ( (c >= 65 && c <= 90 ) || (c >= 97 && c <= 122) );
+		return ( (c >= 65 && c <= 90 ) || (c >= 97 && c <= 122) || c == 95); // 95 == underscore
 	}
 	
 	private boolean isDigit(int c)
@@ -259,7 +270,10 @@ public class LexAnal {
 				if (remaining.length() == 0)
 					return "";
 				else
-					return sb.append(remaining).toString();
+				{
+					isRealConst = true;
+					return sb.append(remaining+" ").toString();
+				}
 			}
 			else if (isWhiteSpace(c))  //ce je prebrana stevilka samo ena cifra
 			{
@@ -294,7 +308,7 @@ public class LexAnal {
 		{
 			return "";
 		}
-		else if (! isWhiteSpace(c))
+		else if ((! isWhiteSpace(c)) && (c !=SEMIC))
 		{
 			System.out.println("error");
 			return "";
