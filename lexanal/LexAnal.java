@@ -80,9 +80,9 @@ public class LexAnal {
 			{
 				tempColumn = begColumn;
 				begColumn = endColumn;
-				//Report.error("neveljaven vhod: ", new Position("test.txt", begLine, tempColumn, endLine, endColumn), -1);
-				return new Symbol(-1, "hopla", new Position("test.txt", begLine, tempColumn, endLine, endColumn));
-			}
+				Report.warning("neveljaven vhod: neveljaven znak", new Position("test.txt", begLine, tempColumn, endLine, endColumn));
+				continue;
+				}
 				
 			else if (isLetter(c))
 			{
@@ -105,7 +105,7 @@ public class LexAnal {
 				sb.append((char) c);
 				if (numberError)
 				{
-					System.out.println("napaka");
+					Report.warning("neveljaven vhod: ni stevilka", new Position("test.txt", begLine, tempColumn, endLine, endColumn));
 					numberError = false;
 					continue;
 				}
@@ -132,7 +132,7 @@ public class LexAnal {
 				}
 				else
 				{
-					System.out.println("napaka: digit");
+					Report.warning("neveljaven vhod: napacna stevilka", new Position("test.txt", begLine, tempColumn, endLine, endColumn));
 				}
 			}
 			else
@@ -317,7 +317,7 @@ public class LexAnal {
 				break;
 		}
 		
-		if (c == 101 || c == 69) //e or E
+		if (c == 101 || c == 69) //e or E //not implemented
 		{
 			return "";
 		}
@@ -339,11 +339,13 @@ public class LexAnal {
 		}
 		else if( c == DOT)
 		{
-			System.out.println("error");
+	
 			return "";
 		}
 		else
 		{
+			raf.seek(raf.getFilePointer()-1);
+			endColumn--;
 			return "";
 		}
 		
