@@ -101,9 +101,10 @@ public class LexAnal {
 				String tmp;
 				StringBuffer sb = new StringBuffer(20);
 				sb.append((char) c);
-				if ((tmp = readRemainingDigits()).length() != 0)
+				if ((tmp = readRemainingDigits()).endsWith(" "))
 				{
 					sb.append(tmp);
+					sb.setLength(sb.length()-1);
 					System.out.println(sb.toString());
 					tempColumn = begColumn;
 					begColumn = endColumn;
@@ -259,6 +260,10 @@ public class LexAnal {
 					return "";
 				else
 					return sb.append(remaining).toString();
+			}
+			else if (isWhiteSpace(c))  //ce je prebrana stevilka samo ena cifra
+			{
+				return sb.append(" ").toString();
 			}
 			else
 			{
