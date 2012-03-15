@@ -79,20 +79,19 @@ public class LexAnal {
 					 c == SQ)
 			{
 				tempColumn = begColumn;
-				begColumn = endColumn;
+				begColumn = endColumn-1;
 				Report.warning("neveljaven vhod: neveljaven znak", new Position("test.txt", begLine, tempColumn, endLine, endColumn));
 				continue;
 				}
 				
 			else if (isLetter(c))
 			{
-
 				sb.append((char) c);
 				String remaining = readRemainingLetters();
 				sb.append(remaining);
+				s = new Symbol(getTypeOfToken2(sb.toString()), sb.toString(), new Position("test.txt", begLine, begColumn, endLine, endColumn-1));
 				tempColumn = begColumn;
 				begColumn = endColumn;
-				s = new Symbol(getTypeOfToken2(sb.toString()), sb.toString(), new Position("test.txt", begLine, tempColumn, endLine, endColumn));
 				System.out.println(sb.toString());
 				sb.setLength(0);
 				return s;
@@ -114,9 +113,9 @@ public class LexAnal {
 				{
 					sb.append(tmp);
 					System.out.println(sb.toString());
+					s = new Symbol(1, sb.toString(), new Position("test.txt", begLine, begColumn, endLine, endColumn-1));
 					tempColumn = begColumn;
 					begColumn = endColumn;
-					s = new Symbol(1, sb.toString(), new Position("test.txt", begLine, tempColumn, endLine, endColumn));
 					sb.setLength(0);
 					return s;
 				}
@@ -124,9 +123,9 @@ public class LexAnal {
 				{
 					isRealConst = false;
 					sb.append(tmp);
+					s = new Symbol(2, sb.toString(), new Position("test.txt", begLine, begColumn, endLine, endColumn-1));
 					tempColumn = begColumn;
 					begColumn = endColumn;
-					s = new Symbol(2, sb.toString(), new Position("test.txt", begLine, tempColumn, endLine, endColumn));
 					sb.setLength(0);
 					return s;
 				}
@@ -232,12 +231,6 @@ public class LexAnal {
 		return (i == SPACE) || (i == NEWLINE); 
 	}
 	
-	private void eatWord() throws IOException
-	{
-		while (! isWhiteSpace(getNextChar()))
-			;
-	}
-
 	private int getTypeOfToken2(String token)
 	{
 		Integer type;
@@ -294,8 +287,7 @@ public class LexAnal {
 			else
 			{
 				numberError = true;
-				raf.seek(raf.getFilePointer()-1);
-				begColumn--;
+				ungetChar();
 				break;
 			}
 		}
@@ -321,31 +313,22 @@ public class LexAnal {
 		{
 			return "";
 		}
-		else if (c == SEMIC)
+		else if (c == SEMIC || c == COMMA)
 		{
-			raf.seek(raf.getFilePointer()-1);
-			endColumn--;
-			return sb.toString();
-		}
-		else if (c == COMMA)
-		{
-			raf.seek(raf.getFilePointer()-1);
-			endColumn--;
+			ungetChar();
 			return sb.toString();
 		}
 		else if (isWhiteSpace(c))
 		{
 			return sb.toString();
 		}
-		else if( c == DOT)
+		else if( c == DOT) //npr.: 3. 
 		{
-	
 			return "";
 		}
 		else
 		{
-			raf.seek(raf.getFilePointer()-1);
-			endColumn--;
+			ungetChar();
 			return "";
 		}
 		
@@ -363,43 +346,16 @@ public class LexAnal {
 			}
 			else
 			{
-				raf.seek(raf.getFilePointer()-1);
-				endColumn--;
+				ungetChar();
 				break;
 			}
 		}
 		return sb.toString();
 	}
-	private int readRemainingLetters2() throws IOException
-	{
-		int c;
-		
-		while (true)
-		{
-			c = getNextChar();
-			if (isLetter(c) || isDigit(c))
-			{
-				sb.append((char) c);
-			}
-			else if (c == TILDA || c == BSQ || c == BSL || c == STREHA || c == USC || c == AFNA || c == VPRASAJ || c == DOLLAR ||
-					 c == SQ)
-			{
-				//raf.seek(raf.getFilePointer()-1);
-				return -1;
-			}
-			else
-			{
-				raf.seek(raf.getFilePointer()-1);
-				return 0;
-			}
-		}
 
-		//return sb.toString();
-	}
 	private void ommitComment() throws IOException
 	{
-		int c;
-		while ((c = getNextChar()) != 10)
+		while (getNextChar() != 10)
 			;
 	}
 	private String getStringConst() throws IOException
@@ -416,7 +372,6 @@ public class LexAnal {
 	}
 	private int getNextChar() throws IOException
 	{
-		char c;
 		int i;
 		if ( (i = raf.read()) != -1)
 		{
@@ -429,14 +384,12 @@ public class LexAnal {
 		}
 	}
 	
-	public static void main(String[] args) throws IOException {
-		LexAnal lex = new LexAnal();
-		lex.openSourceFile("/home/blaz/test.txt");
-		lex.getNextSymbol();
-		//System.out.println(lex.lastCharP);
-	
-		
+	private void ungetChar() throws IOException
+	{
+		raf.seek(raf.getFilePointer()-1);
+		endColumn--;
 	}
+	
 	
 	/*white space IN veljavni znaki*/
 	public static final int SPACE = 32;
@@ -476,6 +429,7 @@ public class LexAnal {
 //	private static final String[] TOKENS = new String[8];
 	
 	
+	@SuppressWarnings("serial")
 	public static final HashMap<String, Integer> TOKENS2 = new HashMap<String, Integer>() {{
 		put("intconst", 1);
 		put("realconst", 2);
