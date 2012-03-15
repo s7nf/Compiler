@@ -87,34 +87,34 @@ public class LexAnal {
 
 				sb.append((char) c);
 				String remaining = readRemainingLetters();
-				if (remaining.length() == 0)
-				{
-					continue;
-				}
-				else
-				{
-					sb.append(remaining);
-					tempColumn = begColumn;
-					begColumn = endColumn;
-					s = new Symbol(getTypeOfToken2(sb.toString()), sb.toString(), new Position("test.txt", begLine, tempColumn, endLine, endColumn));
-					System.out.println(sb.toString());
-					sb.setLength(0);
-					return s;
-				}
-				
+				sb.append(remaining);
+				tempColumn = begColumn;
+				begColumn = endColumn;
+				s = new Symbol(getTypeOfToken2(sb.toString()), sb.toString(), new Position("test.txt", begLine, tempColumn, endLine, endColumn));
+				System.out.println(sb.toString());
+				sb.setLength(0);
+				return s;
 			}
 
 			else if (isDigit(c))
 			{
+				String tmp;
 				StringBuffer sb = new StringBuffer(20);
 				sb.append((char) c);
-				sb.append(readRemainingDigits());
-				System.out.println(sb.toString());
-				tempColumn = begColumn;
-				begColumn = endColumn;
-				s = new Symbol(1, sb.toString(), new Position("test.txt", begLine, tempColumn, endLine, endColumn));
-				sb.setLength(0);
-				return s;
+				if ((tmp = readRemainingDigits()).length() != 0)
+				{
+					sb.append(tmp);
+					System.out.println(sb.toString());
+					tempColumn = begColumn;
+					begColumn = endColumn;
+					s = new Symbol(1, sb.toString(), new Position("test.txt", begLine, tempColumn, endLine, endColumn));
+					sb.setLength(0);
+					return s;
+				}
+				else
+				{
+					System.out.println("napaka: digit");
+				}
 			}
 			else
 			{
